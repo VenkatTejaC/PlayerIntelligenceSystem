@@ -39,6 +39,19 @@ def debug_data_source() -> dict:
     return get_current_data_source()
 
 
+@app.post("/debug/reload-data")
+def reload_data_source() -> dict:
+    load_players.cache_clear()
+    players_df = load_players()
+    data_source = get_current_data_source()
+    return {
+        "status": "reloaded",
+        "player_count": int(len(players_df)),
+        "data_source": data_source["source"],
+        "data_location": data_source["location"],
+    }
+
+
 @app.get("/players")
 def list_players() -> dict:
     players_df = load_players()

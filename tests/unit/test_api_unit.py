@@ -20,6 +20,24 @@ def test_debug_data_source_returns_mocked_source(monkeypatch):
 
 
 @pytest.mark.unit
+def test_reload_data_source_clears_cache_and_returns_new_source(monkeypatch):
+    api.load_players.cache_clear()
+    monkeypatch.setattr(api, "load_players_data", lambda: pd.DataFrame({"player_id": [1, 2]}))
+    monkeypatch.setattr(
+        api,
+        "get_current_data_source",
+        lambda: {"source": "s3", "location": "s3://player-intelligence-data/datasets/players.csv"},
+    )
+
+    payload = api.reload_data_source()
+
+    assert payload["status"] == "reloaded"
+    assert payload["player_count"] == 2
+    assert payload["data_source"] == "s3"
+    assert payload["data_location"] == "s3://player-intelligence-data/datasets/players.csv"
+
+
+@pytest.mark.unit
 def test_get_player_analysis_returns_mocked_player(monkeypatch):
     mocked_df = pd.DataFrame(
         [

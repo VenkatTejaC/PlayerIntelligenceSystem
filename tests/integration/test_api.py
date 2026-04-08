@@ -29,6 +29,18 @@ def test_debug_data_source_endpoint_returns_source_details() -> None:
 
 
 @pytest.mark.integration
+def test_reload_data_source_endpoint_reloads_data() -> None:
+    response = client.post("/debug/reload-data")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "reloaded"
+    assert payload["player_count"] > 0
+    assert payload["data_source"] in ["s3", "local"]
+    assert payload["data_location"]
+
+
+@pytest.mark.integration
 def test_players_endpoint_returns_player_ids() -> None:
     response = client.get("/players")
 
