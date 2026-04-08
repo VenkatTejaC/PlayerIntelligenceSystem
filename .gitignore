@@ -7,6 +7,9 @@ wheels/
 *.egg-info
 .coverage
 .pytest_cache/
+.env.local
+.env.local.*
+!.env.local.example
 
 # Virtual environments
 .venv
