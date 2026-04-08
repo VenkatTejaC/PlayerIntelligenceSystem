@@ -1,3 +1,4 @@
+import os
 from io import BytesIO
 import logging
 import warnings
@@ -31,6 +32,27 @@ def get_s3_uri(bucket: str = S3_BUCKET, key: str = S3_KEY) -> str:
     return f"s3://{bucket}/{key}"
 
 
+def get_aws_profile(profile: str | None = AWS_PROFILE) -> str | None:
+    env_profile = os.getenv("AWS_PROFILE")
+    if env_profile:
+        return env_profile
+    return profile
+
+
+def create_s3_session(*, region: str = AWS_REGION, profile: str | None = AWS_PROFILE):
+    resolved_profile = get_aws_profile(profile)
+    if resolved_profile in (None, "", "default"):
+        return boto3.Session(region_name=region)
+    return boto3.Session(profile_name=resolved_profile, region_name=region)
+
+
+def get_sso_login_hint(profile: str | None = AWS_PROFILE) -> str:
+    resolved_profile = get_aws_profile(profile)
+    if resolved_profile:
+        return f"aws sso login --profile {resolved_profile}"
+    return "aws sso login"
+
+
 def read_local_players_data(data_path: str = DATA_PATH) -> pd.DataFrame:
     logger.info("Loading player data from local file: %s", data_path)
     _set_data_source("local", data_path)
@@ -45,19 +67,32 @@ def read_s3_players_data(
     profile: str | None = AWS_PROFILE,
 ) -> pd.DataFrame:
     s3_uri = get_s3_uri(bucket=bucket, key=key)
+    resolved_profile = get_aws_profile(profile)
     logger.info(
         "Loading player data from S3: %s (region=%s, profile=%s)",
         s3_uri,
         region,
-        profile or "default-chain",
+        resolved_profile or "default-chain",
     )
-    session = boto3.Session(profile_name=profile, region_name=region)
+    session = create_s3_session(region=region, profile=profile)
     client = session.client("s3")
     response = client.get_object(Bucket=bucket, Key=key)
     body = response["Body"].read()
     _set_data_source("s3", s3_uri)
     logger.info("Loaded player data from S3 successfully: %s", s3_uri)
     return pd.read_csv(BytesIO(body))
+
+
+def _format_s3_error_message(exc: Exception, *, data_path: str, profile: str | None) -> str:
+    message = f"Falling back to local data at {data_path} because S3 read failed: {exc}"
+    if isinstance(exc, ClientError):
+        error_code = exc.response.get("Error", {}).get("Code")
+        if error_code in {"ExpiredToken", "ExpiredTokenException"}:
+            message = (
+                f"{message}. Your AWS SSO session appears to be expired. "
+                f"Refresh it with: {get_sso_login_hint(profile)}"
+            )
+    return message
 
 
 def load_players_data(
@@ -80,13 +115,7 @@ def load_players_data(
         if not fallback_to_local:
             raise
 
-        logger.warning(
-            "Falling back to local player data at %s because S3 read failed: %s",
-            data_path,
-            exc,
-        )
-        warnings.warn(
-            f"Falling back to local data at {data_path} because S3 read failed: {exc}",
-            stacklevel=2,
-        )
+        message = _format_s3_error_message(exc, data_path=data_path, profile=profile)
+        logger.warning(message)
+        warnings.warn(message, stacklevel=2)
         return read_local_players_data(data_path)
