@@ -10,13 +10,13 @@ def test_debug_data_source_returns_mocked_source(monkeypatch):
     monkeypatch.setattr(
         api,
         "get_current_data_source",
-        lambda: {"source": "local", "location": "data/players.csv"},
+        lambda: {"source": "s3", "location": "s3://player-intelligence-data/datasets/players.csv"},
     )
 
     payload = api.debug_data_source()
 
-    assert payload["source"] == "local"
-    assert payload["location"] == "data/players.csv"
+    assert payload["source"] == "s3"
+    assert payload["location"] == "s3://player-intelligence-data/datasets/players.csv"
 
 
 @pytest.mark.unit
@@ -26,15 +26,15 @@ def test_reload_data_source_clears_cache_and_returns_new_source(monkeypatch):
     monkeypatch.setattr(
         api,
         "get_current_data_source",
-        lambda: {"source": "local", "location": "data/players.csv"},
+        lambda: {"source": "s3", "location": "s3://player-intelligence-data/datasets/players.csv"},
     )
 
     payload = api.reload_data_source()
 
     assert payload["status"] == "reloaded"
     assert payload["player_count"] == 2
-    assert payload["data_source"] == "local"
-    assert payload["data_location"] == "data/players.csv"
+    assert payload["data_source"] == "s3"
+    assert payload["data_location"] == "s3://player-intelligence-data/datasets/players.csv"
 
 
 @pytest.mark.unit
@@ -55,13 +55,13 @@ def test_get_player_analysis_returns_mocked_player(monkeypatch):
     )
 
     monkeypatch.setattr(api, "analyze_players", lambda: mocked_df)
-    monkeypatch.setattr(api, "get_current_data_source", lambda: {"source": "local", "location": "data/players.csv"})
+    monkeypatch.setattr(api, "get_current_data_source", lambda: {"source": "s3", "location": "s3://player-intelligence-data/datasets/players.csv"})
 
     payload = api.get_player_analysis(7)
 
     assert payload["player"]["player_id"] == 7
     assert payload["player"]["recommendation"] == "Offer discount"
-    assert payload["data_source"] == "local"
+    assert payload["data_source"] == "s3"
 
 
 @pytest.mark.unit
