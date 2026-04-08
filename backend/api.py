@@ -1,15 +1,12 @@
-from functools import lru_cache
-
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 
 from orchestration.graph import build_graph
-from utils.data_loader import get_current_data_source, load_players_data
+from utils.data_loader import clear_players_data_cache, get_current_data_source, load_players_data
 
 app = FastAPI(title="Player Intelligence API", version="0.1.0")
 
 
-@lru_cache(maxsize=1)
 def load_players() -> pd.DataFrame:
     return load_players_data()
 
@@ -41,7 +38,7 @@ def debug_data_source() -> dict:
 
 @app.post("/debug/reload-data")
 def reload_data_source() -> dict:
-    load_players.cache_clear()
+    clear_players_data_cache()
     players_df = load_players()
     data_source = get_current_data_source()
     return {

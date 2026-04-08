@@ -7,3 +7,4 @@ AWS_PROFILE = "default"
 S3_BUCKET = "player-intelligence-data"
 S3_KEY = "datasets/players.csv"
 S3_FALLBACK_TO_LOCAL = True
+S3_METADATA_CHECK_INTERVAL_SECONDS = 30
