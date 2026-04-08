@@ -4,7 +4,8 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
-from utils.config import DATA_PATH, MODEL_PATH
+from utils.config import MODEL_PATH
+from utils.data_loader import load_players_data
 
 TARGET_COLUMN = "churn"
 IDENTIFIER_COLUMNS = ["player_id"]
@@ -16,8 +17,8 @@ FEATURE_COLUMNS = [
 ]
 
 
-def load_training_data(data_path: str = DATA_PATH) -> pd.DataFrame:
-    return pd.read_csv(data_path)
+def load_training_data() -> pd.DataFrame:
+    return load_players_data()
 
 
 def split_features_target(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:

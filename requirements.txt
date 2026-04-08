@@ -2,6 +2,7 @@ langchain
 langgraph
 chromadb
 sentence-transformers
+boto3
 pandas
 numpy
 scikit-learn

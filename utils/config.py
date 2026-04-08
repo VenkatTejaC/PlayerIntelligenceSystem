@@ -1,4 +1,9 @@
 DATA_PATH = "data/players.csv"
 MODEL_PATH = "models/churn_model.pkl"
 CHROMA_PATH = "rag/chroma_db"
-#STREAM_DATA_PATH = "data/riot_stream.csv"
+
+AWS_REGION = "eu-west-2"
+AWS_PROFILE = "default"
+S3_BUCKET = "player-intelligence-data"
+S3_KEY = "datasets/players.csv"
+S3_FALLBACK_TO_LOCAL = True

@@ -5,11 +5,16 @@ API_BASE_URL = "http://127.0.0.1:8000"
 TIMEOUT_SECONDS = 30
 
 
-def fetch_player_ids() -> list[int]:
+def fetch_health() -> dict:
+    response = requests.get(f"{API_BASE_URL}/health", timeout=TIMEOUT_SECONDS)
+    response.raise_for_status()
+    return response.json()
+
+
+def fetch_player_ids() -> dict:
     response = requests.get(f"{API_BASE_URL}/players", timeout=TIMEOUT_SECONDS)
     response.raise_for_status()
-    payload = response.json()
-    return payload["player_ids"]
+    return response.json()
 
 
 def fetch_player_analysis(player_id: int) -> dict:
@@ -19,16 +24,17 @@ def fetch_player_analysis(player_id: int) -> dict:
     )
     response.raise_for_status()
     payload = response.json()
-    return payload["player"]
+    return payload
 
 
 st.set_page_config(page_title="Player Intelligence", layout="wide")
 
 st.title("Player Intelligence System")
-st.caption(f"Frontend: Streamlit | Backend API: {API_BASE_URL}")
 
 try:
-    player_ids = fetch_player_ids()
+    health = fetch_health()
+    players_payload = fetch_player_ids()
+    player_ids = players_payload["player_ids"]
 except requests.RequestException as exc:
     st.error(
         "Could not connect to the FastAPI backend. Start it with "
@@ -37,12 +43,17 @@ except requests.RequestException as exc:
     st.exception(exc)
     st.stop()
 
+st.caption(
+    f"Backend API: {API_BASE_URL} | Data source: {health['data_source']} | Location: {health['data_location']}"
+)
+
 player_id = st.selectbox("Select Player ID", options=player_ids, index=0)
 
 if st.button("Analyze Player"):
     try:
         with st.spinner("Requesting analysis from backend..."):
-            player = fetch_player_analysis(int(player_id))
+            payload = fetch_player_analysis(int(player_id))
+            player = payload["player"]
     except requests.HTTPError as exc:
         if exc.response is not None and exc.response.status_code == 404:
             st.error("Player not found.")
@@ -54,6 +65,7 @@ if st.button("Analyze Player"):
         st.exception(exc)
     else:
         st.subheader(f"Player {player_id} Analysis")
+        st.info(f"Data source used for this request: {payload['data_source']}")
 
         col1, col2, col3 = st.columns(3)
 

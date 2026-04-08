@@ -14,6 +14,18 @@ def test_health_endpoint_returns_ok() -> None:
     payload = response.json()
     assert payload["status"] == "ok"
     assert payload["player_count"] > 0
+    assert payload["data_source"] in ["s3", "local"]
+    assert payload["data_location"]
+
+
+@pytest.mark.integration
+def test_debug_data_source_endpoint_returns_source_details() -> None:
+    response = client.get("/debug/data-source")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] in ["s3", "local"]
+    assert payload["location"]
 
 
 @pytest.mark.integration
@@ -24,6 +36,7 @@ def test_players_endpoint_returns_player_ids() -> None:
     payload = response.json()
     assert payload["player_count"] > 0
     assert 0 in payload["player_ids"]
+    assert payload["data_source"] in ["s3", "local"]
 
 
 @pytest.mark.integration
@@ -34,6 +47,7 @@ def test_player_analysis_endpoint_returns_recommendation() -> None:
     payload = response.json()
     assert payload["player"]["player_id"] == 25
     assert "recommendation" in payload["player"]
+    assert payload["data_source"] in ["s3", "local"]
 
 
 @pytest.mark.integration
