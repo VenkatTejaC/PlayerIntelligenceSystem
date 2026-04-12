@@ -30,7 +30,7 @@ def fetch_player_analysis(player_id: int) -> dict:
 
 st.set_page_config(page_title="Player Intelligence", layout="wide")
 
-st.title("Player Intelligence System")
+st.title("Player Yntelligence System")
 
 try:
     health = fetch_health()
