@@ -65,6 +65,12 @@ docker push <account-id>.dkr.ecr.<aws-region>.amazonaws.com/player-intelligence-
 docker push <account-id>.dkr.ecr.<aws-region>.amazonaws.com/player-intelligence-ui:<tag>
 ```
 
+Or use the helper script:
+
+```powershell
+.\scripts\push-to-ecr.ps1 -AwsAccountId <account-id> -Region eu-west-2 -Tag latest
+```
+
 ### ECS Direction
 
 Recommended next step for ECS is AWS Fargate with either:
@@ -73,3 +79,30 @@ Recommended next step for ECS is AWS Fargate with either:
 - two separate ECS services if you want independent scaling later
 
 For production, use environment variables or secrets in ECS rather than hardcoded values. For dataset access, prefer S3. For persistent Chroma storage, plan for EFS or another persistence strategy because container local storage is not durable.
+
+### ECS Deployment Notes
+
+An ECS Fargate task definition template is available at `deploy/ecs-task-definition.json`.
+
+Recommended setup:
+
+- Create two ECR repos: `player-intelligence-api` and `player-intelligence-ui`
+- Push both local Docker images to ECR
+- Register the ECS task definition after replacing placeholder account IDs
+- Use an ECS task role with `s3:GetObject` permission on your dataset key
+- Set `S3_FALLBACK_TO_LOCAL=false` in ECS so the API reads from S3 only
+
+Example minimal IAM permission for the ECS task role:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": "arn:aws:s3:::player-intelligence-data/datasets/players.csv"
+    }
+  ]
+}
+```
