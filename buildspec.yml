@@ -9,17 +9,17 @@ env:
 phases:
   pre_build:
     commands:
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 430006376054.dkr.ecr.$AWS_REGION.amazonaws.com
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 666127452756.dkr.ecr.$AWS_REGION.amazonaws.com
 
   build:
     commands:
       - docker build -t $ECR_REPO -f Dockerfile.ui .
-      - docker tag $ECR_REPO:latest 430006376054.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+      - docker tag $ECR_REPO:latest 666127452756.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
 
   post_build:
     commands:
-      - docker push 430006376054.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
-      - printf '[{"name":"ui","imageUri":"%s"}]' 430006376054.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG > imagedefinitions.json
+      - docker push 666127452756.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+      - printf '[{"name":"ui","imageUri":"%s"}]' 666127452756.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
   files:
