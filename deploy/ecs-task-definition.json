@@ -1,0 +1,77 @@
+{
+  "family": "player-intelligence-system",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "2048",
+  "memory": "4096",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/player-intelligence-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "<ACCOUNT_ID>.dkr.ecr.eu-west-2.amazonaws.com/player-intelligence-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "API_HOST", "value": "0.0.0.0" },
+        { "name": "API_PORT", "value": "8000" },
+        { "name": "AWS_REGION", "value": "eu-west-2" },
+        { "name": "S3_BUCKET", "value": "player-intelligence-data" },
+        { "name": "S3_KEY", "value": "datasets/players.csv" },
+        { "name": "S3_FALLBACK_TO_LOCAL", "value": "false" }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\" || exit 1"],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 5,
+        "startPeriod": 30
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/player-intelligence-system",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    },
+    {
+      "name": "ui",
+      "image": "<ACCOUNT_ID>.dkr.ecr.eu-west-2.amazonaws.com/player-intelligence-ui:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8501,
+          "hostPort": 8501,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "API_BASE_URL", "value": "http://127.0.0.1:8000" },
+        { "name": "STREAMLIT_HOST", "value": "0.0.0.0" },
+        { "name": "STREAMLIT_PORT", "value": "8501" }
+      ],
+      "dependsOn": [
+        {
+          "containerName": "api",
+          "condition": "HEALTHY"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/player-intelligence-system",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "ui"
+        }
+      }
+    }
+  ]
+}
