@@ -1,4 +1,5 @@
 from langgraph.graph import StateGraph
+from opik.integrations.langchain import OpikTracer, track_langgraph
 
 from agents.segmentation_agent import segmentation_agent
 from agents.churn_agent import churn_agent
@@ -30,4 +31,9 @@ def build_graph():
     graph.add_edge("churn", "recommendation")
     graph.add_edge("recommendation", "final")
 
-    return graph.compile()
+    compiled_graph = graph.compile()
+
+    opik_tracer = OpikTracer(project_name="player-intelligence-system")
+    tracked_graph = track_langgraph(compiled_graph, opik_tracer)
+
+    return tracked_graph

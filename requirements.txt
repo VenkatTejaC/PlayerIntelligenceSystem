@@ -13,3 +13,4 @@ torch
 mlflow
 streamlit
 requests
+opik
